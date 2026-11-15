@@ -110,6 +110,12 @@ bundle to the release, and publishes `server.json` signed in with the workflow's
 is Windows only: macOS waits for a signed app (Gatekeeper refuses an unsigned executable unpacked
 from a download), Linux needs the system's WebKitGTK.
 
+Glama (glama.ai/mcp/servers), which the awesome-mcp-servers list requires, checks a server by
+starting it in a container: `packaging/mcp/Dockerfile` installs the release's `.deb` and runs
+`platypus-db --mcp`, which works without a display. Bump its `VERSION` with each release and paste
+it in the server's Dockerfile settings on Glama. Check it locally with an `initialize` and a
+`tools/list` request on stdin to `docker run -i --rm platypusdb-mcp`.
+
 ## Package managers
 
 `packaging/` holds the manifests for winget, Homebrew (cask), the AUR (`platypusdb-bin`, from
