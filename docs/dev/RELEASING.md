@@ -133,7 +133,14 @@ are missing is skipped (a Windows-only release fills only winget). Then submit e
   of our own (`platypus-labs/homebrew-tap`) is the alternative.
 - **AUR**: push `PKGBUILD` and `.SRCINFO` to `ssh://aur@aur.archlinux.org/platypusdb-bin.git`
   (an AUR account with an SSH key); check with `makepkg -si` on Arch first.
-- **Flathub**: the first time, a pull request to `flathub/flathub` (branch `new-pr`) with
+- **Flathub**: two Flathub rules (checked 2026-11-15, docs.flathub.org, "Requirements") rule out
+  the manifest in `packaging/flatpak/` as it is. Source-available apps must be built entirely from
+  source, so repackaging the `.deb` would be refused: the manifest has to build the Rust workspace
+  and the frontend offline (crates and npm packages listed with `flatpak-cargo-generator` and
+  `flatpak-node-generator`). And under Flathub's generative AI policy the manifest, the pull request,
+  its commit messages and the replies to reviewers must be written by a person, not by an AI tool
+  or agent. A maintainer writes and submits it by hand; the steps are unchanged:
+  the first time, a pull request to `flathub/flathub` (branch `new-pr`) with
   `io.github.platypus_labs.platypus-db.yml`; Flathub then creates the
   `flathub/io.github.platypus_labs.platypus-db` repository, where later versions go. The Flatpak
   ID is under `io.github.platypus_labs` because Flathub verifies the ID's owner, here through the
