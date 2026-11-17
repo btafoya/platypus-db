@@ -17,6 +17,7 @@ mod admin;
 mod bulk;
 #[doc(hidden)]
 pub mod columns;
+mod databases;
 mod ddl;
 mod hierarchyid;
 mod meta;
@@ -442,6 +443,10 @@ impl Connection for MssqlConnection {
         admin::maintain(self, schema, table, operation).await
     }
 
+    async fn database_details(&self) -> Result<Vec<platypus_core::DatabaseInfo>> {
+        databases::database_details(self).await
+    }
+
     async fn principals(&self) -> Result<Vec<platypus_core::Principal>> {
         security::principals(self).await
     }
@@ -495,6 +500,7 @@ impl Connection for MssqlConnection {
             bulk_load: true,
             server_parameters: true,
             server_metrics: true,
+            database_admin: true,
             debugger: false,
         }
     }

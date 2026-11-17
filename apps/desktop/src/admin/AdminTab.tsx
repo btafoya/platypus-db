@@ -22,10 +22,11 @@ import { pushSample, type Sample } from "./dashboardModel";
 import { Parameters } from "./Parameters";
 import { type Activity, activity, blockingChains, type Chain, matches, seconds } from "./sessions";
 import { ObjectsView, TopQueries } from "./Statistics";
+import { Databases } from "./Databases";
 import { Users } from "./Users";
 import { EmptyState, LoadingState } from "../ui/State";
 
-type AdminView = "sessions" | "locks" | "statements" | "objects" | "parameters" | "dashboard" | "users";
+type AdminView = "sessions" | "locks" | "statements" | "objects" | "parameters" | "dashboard" | "databases" | "users";
 
 /** Views read on demand, not every few seconds: the server sums their numbers over hours, or
  *  they do not change while the tab is open. */
@@ -42,6 +43,7 @@ const VIEW_LABELS: Record<AdminView, string> = {
   sessions: msg("Sessions"),
   locks: msg("Locks"),
   dashboard: msg("Dashboard"),
+  databases: msg("Databases"),
   users: msg("Users and roles"),
   statements: msg("Costliest statements"),
   objects: msg("Tables and indexes"),
@@ -54,6 +56,7 @@ function availableViews(caps: Capabilities): AdminView[] {
   const views: AdminView[] = [];
   if (caps.server_sessions) views.push("sessions", "locks");
   if (caps.server_metrics) views.push("dashboard");
+  if (caps.database_admin) views.push("databases");
   if (caps.security) views.push("users");
   if (caps.server_statistics) views.push("statements", "objects");
   if (caps.server_parameters) views.push("parameters");
@@ -165,8 +168,8 @@ export function AdminTab({ tab, connection, active, sideSession, onChange }: Tab
           await loadParameters(sid, capabilities);
           continue;
         }
-        // The users and roles read themselves.
-        if (viewNow.current === "users") return;
+        // The users, roles and databases read themselves.
+        if (viewNow.current === "users" || viewNow.current === "databases") return;
         if (ON_DEMAND.has(viewNow.current)) {
           await loadStatistics(sid, viewNow.current, capabilities);
           continue;
@@ -246,7 +249,7 @@ export function AdminTab({ tab, connection, active, sideSession, onChange }: Tab
   useEffect(() => {
     if (!active) return;
     void load();
-    if (interval <= 0 || ON_DEMAND.has(view) || view === "users") return;
+    if (interval <= 0 || ON_DEMAND.has(view) || view === "users" || view === "databases") return;
     const timer = window.setInterval(() => void load(), interval * 1000);
     return () => window.clearInterval(timer);
   }, [active, interval, view, version]);
@@ -433,6 +436,9 @@ export function AdminTab({ tab, connection, active, sideSession, onChange }: Tab
             loading && <LoadingState compact title={t("Reading the statistics…")} />
           )}
         </div>
+      )}
+      {!unreachable && view === "databases" && caps?.database_admin && (
+        <Databases connection={connection} active={active} refresh={version} security={!!caps.security} sideSession={sideSession} />
       )}
       {!unreachable && view === "users" && caps?.security && (
         <Users connection={connection} active={active} refresh={version} sideSession={sideSession} />

@@ -511,6 +511,15 @@ impl Connection for Logged {
         .await
     }
 
+    async fn database_details(&self) -> Result<Vec<platypus_core::DatabaseInfo>> {
+        self.track(
+            LogKind::Metadata,
+            "database details",
+            self.inner.database_details(),
+        )
+        .await
+    }
+
     async fn principals(&self) -> Result<Vec<platypus_core::Principal>> {
         self.track(
             LogKind::Metadata,

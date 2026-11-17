@@ -8,6 +8,7 @@ mod admin;
 mod capabilities;
 mod config;
 mod connection;
+mod databases;
 mod debug;
 mod env;
 mod error;
@@ -38,6 +39,7 @@ pub use connection::{
     BulkRows, CancelHandle, Canceller, Connection, Driver, ExecOptions, ExecResult, Executed,
     NextResult, RecordBatchStream, ServerInfo, execute_each,
 };
+pub use databases::{DatabaseChange, DatabaseInfo, DatabaseSpec};
 pub use debug::{
     DEBUG_RESULT_ROWS, DebugArgument, DebugAvailability, DebugFrame, DebugOutcome, DebugParameter,
     DebugPosition, DebugRoutine, DebugSession, DebugState, DebugStep, DebugVariable, Debugger,

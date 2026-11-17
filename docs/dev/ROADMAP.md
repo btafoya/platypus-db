@@ -131,6 +131,7 @@ blocco cade.
 | S — Collaudo finale | ✅ fatto (P1 in parte: inventario, giro per aree, tutti i database, percorsi da utente, secondo giro, aggiornamento dei dati; P2: revisione di sicurezza, prestazioni) |
 | T — Revisione UX | ✅ completato |
 | U — Esportazione delle connessioni | ✅ completato |
+| V — Gestione dei database | 🔒 Claude · claude/database-management-ui-plan-qwwh7w · 2026-11-17 |
 | Progetti (spazi di lavoro) | ✅ fatto (parte B) |
 
 ### Gruppo A — Modifica dei dati
@@ -1476,6 +1477,66 @@ i comandi Tauri relativi, la UI di esportazione e il flusso "Importa le connessi
 | ✅ 🆕 All'importazione, *sostituire* una connessione già presente (stesso server, database e utente) invece di aggiungerne una seconda | P2 | D |
 | ✅ 🆕 Le password dei salti SSH intermedi (jump host) nel file cifrato | P3 | N |
 
+### Gruppo V — Gestione dei database (Database Manager)
+
+**Stato: in corso.** Fatto: contratto nel core (`DatabaseInfo`, `DatabaseSpec`, `DatabaseChange`,
+`database_details`, capacità `database_admin`), le istruzioni per PostgreSQL, MySQL, SQL Server
+e ClickHouse in `platypus_sql::databases`, `database_details` nei quattro driver, i comandi
+Tauri, la vista "Databases" nella scheda Admin (elenco, crea, modifica, elimina con nome da
+scrivere, anteprima SQL) e la matrice dei permessi per database. Provato su server veri:
+PostgreSQL 16 (conformance completa, 91 test) e MySQL 8.0 (`manages_databases`). **Da provare**
+(serve Docker e Windows): conformance su SQL Server, ClickHouse e MariaDB, lo scenario E2E
+`admin-databases-postgres` e la matrice dei permessi su MySQL, SQL Server e ClickHouse. Da fare:
+Oracle, i database su file e i driver P3. Una scheda per connessione (la scheda Admin, che già
+ospita Utenti e ruoli) con due pannelli:
+**Database** (creare, modificare, eliminare) e **Utenti e ruoli** (quelli del gruppo J)
+con una matrice dei permessi. Oggi `Connection::databases()` elenca i database e il
+gruppo J gestisce utenti, ruoli e privilegi (`principals`, `principal_privileges`, capacità
+`security`), ma non si può creare, modificare o eliminare un database dall'app.
+
+**Decisioni prese.**
+- **Driver della prima versione:** PostgreSQL, MySQL/MariaDB, SQL Server, Oracle, ClickHouse.
+  I database su file (SQLite, DuckDB, libSQL) solo crea/elimina file. Mongo, Redis, Cassandra e
+  Search restano fuori (funzionalità P3). Le azioni non supportate si nascondono con una capacità
+  `database_admin`.
+- **Posizione:** una vista "Databases" nella scheda Admin esistente, con lo stile e i
+  componenti di `admin/` (`admin.css`, `AdminSplit`); gli Utenti restano dove sono.
+- **Sicurezza:** ogni modifica ha l'anteprima SQL; l'eliminazione richiede di scrivere il nome del
+  database; valgono le protezioni di sola lettura e produzione del gruppo L.
+- **Permessi:** matrice di caselle (utente o ruolo, ambito server/database/schema/tabella,
+  privilegi in griglia); le modifiche diventano GRANT/REVOKE per differenza, con anteprima SQL.
+
+**Prima di scrivere codice** si controlla cosa esiste già in `platypus-core` (`security.rs`,
+`GrantTarget`, `PrincipalSpec`) e in `platypus-sql`, e sui branch degli altri gruppi, per non
+duplicare tipi o metodi.
+
+**Area:** `crates/platypus-core/` (nuovo modulo `databases`), `crates/platypus-sql/`
+(generazione di CREATE/ALTER/DROP DATABASE e di GRANT/REVOKE per differenza), i driver
+`platypus-driver-{pg,mysql,mssql,oracle,clickhouse}`, `platypus-conformance`, i comandi Tauri,
+`apps/desktop/src/manager/` (nuova) e `apps/desktop/src/admin/` (Utenti spostato)
+**Dipende da:** J (utenti e privilegi), L (protezioni); nessun gruppo aperto
+
+| Funzionalità | Prio | Origine |
+|---|---|---|
+| **Contratto nel core**: tipi `DatabaseMeta`, `DatabaseSpec`, schema delle opzioni per driver; metodi `Connection` con default `Unsupported`: `database_details`, `create_database`, `alter_database`, `drop_database`, ciascuno con la sua versione `*_sql` per l'anteprima; capacità `database_admin` | P1 | D |
+| **PostgreSQL** come driver di riferimento: crea, modifica (nome, proprietario, encoding, collation, template, limite di connessioni), elimina (con chiusura delle sessioni), dettagli e dimensione | P1 | D |
+| **Scheda "Gestione"**: barra con Nuovo, Modifica, Elimina, Aggiorna; elenco dei database con dettagli; apertura dal menu della connessione e dalla palette dei comandi | P1 | D |
+| **Finestra del database** generata dallo schema delle opzioni del driver, con schede Generale e Anteprima SQL | P1 | D |
+| **Eliminazione sicura**: scrivere il nome del database, elenco di ciò che dipende (sessioni aperte), blocco su connessioni di sola lettura | P1 | L |
+| **MySQL/MariaDB**: crea, modifica (charset, collation), elimina | P1 | D |
+| **Pannello Utenti e ruoli** dentro la scheda: riuso di `Users.tsx` e `UserDialogs.tsx` senza duplicarli; aggiornamento degli scenari E2E degli utenti | P1 | J |
+| **Matrice dei permessi**: scelta di utente/ruolo e ambito, griglia di caselle, differenza in GRANT/REVOKE, anteprima SQL, applicazione con conferma; mostra solo i privilegi che esistono per l'ambito e il motore | P1 | D |
+| **SQL Server**: crea, modifica (collation, recovery model), elimina | P2 | D |
+| **Oracle**: "database" come schema/utente o PDB, con testi dell'interfaccia adatti | P2 | D |
+| **ClickHouse**: crea, modifica (engine, comment), elimina | P2 | D |
+| **Database su file** (SQLite, DuckDB, libSQL): crea ed elimina il file, con conferma | P2 | D |
+| **Vista dei permessi "per database" e "per utente"** nella matrice | P2 | N |
+| **Conformance**: crea → modifica → elimina e grant → revoke su ogni driver con i container Docker | P1 | P |
+| **Scenari E2E** corposi: crea, modifica, elimina con nome sbagliato (errore), grant e revoke dalla matrice, connessione di sola lettura che blocca, driver non supportato senza la scheda | P1 | P |
+| **Copia di un database** (stesso server) e **rinomina** dove il motore lo permette | P3 | N |
+| **MongoDB, Redis, Cassandra, Search**: gestione dei database/keyspace/indici con le stesse finestre | P3 | N |
+| Documentazione: [FEATURES.md](../user/FEATURES.md), `EXTENDING.md` (come un driver espone `database_admin`) | P2 | P |
+
 ---
 
 ## 3. Mappa dei conflitti
@@ -1486,9 +1547,9 @@ della fase 0 (un'API piccola), non la condivisione del file.
 | Area condivisa | Gruppi | Contratto |
 |---|---|---|
 | `DataGrid.tsx` | A, B, M | 0.4: estensioni della griglia |
-| Trait `Connection` | C, E, G, J | 0.6: capacità opzionali |
-| `platypus-sql` | A, D, H, I, L | 0.5: `Dialect` e moduli separati |
-| `App.tsx`, tab | C, E, I, J, K | 0.3: registro dei tipi di tab |
+| Trait `Connection` | C, E, G, J, V | 0.6: capacità opzionali |
+| `platypus-sql` | A, D, H, I, L, V | 0.5: `Dialect` e moduli separati |
+| `App.tsx`, tab | C, E, I, J, K, V | 0.3: registro dei tipi di tab |
 | Menu e scorciatoie | tutti | 0.2: registro delle azioni |
 | `ConnectionDialog.tsx` | F, G | Sezioni per driver registrabili |
 | `platypus-store` (connessioni, segreti, cronologia) | F, N, Q, U | API pubblica dello store; il formato dei file cambia solo con una migrazione |
@@ -1511,6 +1572,7 @@ dell'ondata.
 | **5** | **R** | Revisione grafica di tutta l'app, a funzionalità finite | v1.0 | In attesa |
 | **6** | **S** | Collaudo finale di tutta l'app, dopo la revisione grafica | v1.0 | In attesa |
 | **7** | **T**, **U** in parallelo | Revisione dell'usabilità sezione per sezione; esportazione delle connessioni | v1.0 | Da fare |
+| **8** | **V** | Gestione dei database e dei permessi in stile Navicat | v1.1 | Da fare |
 
 Per ogni gruppo, la Definition of Done segue quella dell'MVP:
 - test di conformance o E2E per ciò che è stato aggiunto;

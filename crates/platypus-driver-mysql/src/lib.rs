@@ -8,6 +8,7 @@ mod admin;
 mod bulk;
 #[doc(hidden)]
 pub mod columns;
+mod databases;
 mod explain;
 pub use explain::read_plan;
 mod meta;
@@ -445,6 +446,10 @@ impl Connection for MySqlConnection {
         admin::maintain(self, schema, table, operation).await
     }
 
+    async fn database_details(&self) -> Result<Vec<platypus_core::DatabaseInfo>> {
+        databases::database_details(self).await
+    }
+
     async fn principals(&self) -> Result<Vec<platypus_core::Principal>> {
         security::principals(self).await
     }
@@ -501,6 +506,7 @@ impl Connection for MySqlConnection {
             bulk_load: self.local_infile,
             server_parameters: true,
             server_metrics: true,
+            database_admin: true,
             debugger: false,
             ..Default::default()
         }

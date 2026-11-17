@@ -551,6 +551,14 @@ box resize by their edge or corner; the list keeps its width.
   tables and routines (with grant option) from a form, with the SQL previewed first. Passwords
   are masked in the preview and never reach the query log. PostgreSQL, MySQL, MariaDB, SQL
   Server and ClickHouse.
+- **Databases**: the server's databases with owner, encoding, collation, size and open
+  sessions; create, change (owner, connection limit, comment, collation, rename, where the
+  server allows) and drop them from a form with the SQL previewed first. Dropping asks you to
+  type the database's name, can end the connected sessions first where the server can, and is
+  refused for the server's own databases and the one you are connected to. A **Permissions**
+  matrix shows who has which privilege on the selected database and turns your ticks into
+  `GRANT` and `REVOKE` statements, previewed before they run. Not on read-only connections.
+  PostgreSQL, MySQL, MariaDB, SQL Server and ClickHouse.
 - **Debug…** a PL/pgSQL function or procedure (PostgreSQL with the `pldebugger` extension):
   arguments in a form, then step into, step over, continue (F11, F10, F5), breakpoints on the
   source, the stack, variables you can change, and the result at the end.

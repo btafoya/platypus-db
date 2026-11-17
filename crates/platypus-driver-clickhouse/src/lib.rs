@@ -6,6 +6,7 @@
 //! which a separate request stops with `KILL QUERY`. ClickHouse has no transactions:
 //! every statement takes effect on its own.
 
+mod databases;
 mod error;
 mod http;
 mod meta;
@@ -254,6 +255,7 @@ impl Connection for ClickHouseConnection {
             metadata_search: true,
             server_parameters: true,
             server_metrics: true,
+            database_admin: true,
             security: true,
             ..Capabilities::default()
         }
@@ -265,6 +267,10 @@ impl Connection for ClickHouseConnection {
 
     async fn server_metrics(&self) -> Result<platypus_core::ServerMetrics> {
         monitor::metrics(self).await
+    }
+
+    async fn database_details(&self) -> Result<Vec<platypus_core::DatabaseInfo>> {
+        databases::database_details(self).await
     }
 
     async fn principals(&self) -> Result<Vec<platypus_core::Principal>> {

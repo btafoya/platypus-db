@@ -7,6 +7,7 @@
 //! offsets are byte offsets into the input.
 
 mod analysis;
+pub mod databases;
 mod dialect;
 pub mod dml;
 mod format;

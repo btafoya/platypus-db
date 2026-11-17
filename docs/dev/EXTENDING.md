@@ -36,6 +36,10 @@ Existing optional methods are `explain`, `object_ddl`, `databases`, `server_sess
 `principals` and `principal_privileges` (flag `security`) list the users, roles and privileges
 of a server; the statements that change them are not driver methods: `platypus_sql::security`
 writes them per dialect.
+`database_details` (flag `database_admin`) lists the databases of a server with their owner,
+encoding, size and the like; as for users, the statements that create, alter and drop a
+database are not driver methods: `platypus_sql::databases` writes them per dialect and says
+what each dialect takes (`attributes`).
 `object_properties`
 and `catalog_foreign_keys` are optional too, but need no flag: their default is an empty
 list. `object_comment` has a default too: it takes the comment from the object list, and a

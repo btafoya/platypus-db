@@ -645,3 +645,35 @@
   max-height: 200px;
   overflow: auto;
 }
+
+/* Databases: the server's own databases dimmed, the one in use marked. */
+.admin-database.system td {
+  color: var(--fg-muted);
+}
+
+.database-current {
+  margin-left: var(--space-8);
+}
+
+/* Permission matrix: the principals down, the privileges across; an edited cell is marked. */
+.modal.permission-matrix {
+  width: min(900px, 94vw);
+}
+
+.permission-grid {
+  max-height: 340px;
+  overflow: auto;
+}
+
+.permission-cell {
+  text-align: center;
+}
+
+td.permission-cell.dirty {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.permission-error {
+  color: var(--danger, var(--fg-muted));
+}

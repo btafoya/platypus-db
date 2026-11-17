@@ -2664,6 +2664,204 @@ fn assert_metric(backend: &str, what: &str, metric: &platypus_core::Metric) {
     );
 }
 
+/// Runs the statements of `change` on `conn`.
+async fn apply_database_change(
+    conn: &dyn Connection,
+    dialect: platypus_sql::Dialect,
+    current: &str,
+    change: &platypus_core::DatabaseChange,
+) -> Result<(), Error> {
+    let statements = platypus_sql::databases::statements(dialect, change, Some(current))
+        .map_err(Error::Other)?;
+    for statement in statements {
+        run(conn, &statement).await?;
+    }
+    Ok(())
+}
+
+/// Drops the throwaway databases `names`, ignoring those that are not there.
+async fn drop_test_databases(
+    conn: &dyn Connection,
+    dialect: platypus_sql::Dialect,
+    current: &str,
+    names: &[&str],
+) {
+    for name in names {
+        let drop = platypus_core::DatabaseChange::Drop {
+            name: (*name).to_owned(),
+            force: true,
+        };
+        let _ = apply_database_change(conn, dialect, current, &drop).await;
+    }
+}
+
+/// Creates, alters and drops `platypus_dbm_test` and checks the list after each step.
+async fn database_round_trip(b: &Backend, conn: &dyn Connection) {
+    use platypus_core::{DatabaseChange, DatabaseSpec};
+
+    let dialect = platypus_sql::Dialect::from(b.config.driver);
+    let (name, renamed) = ("platypus_dbm_test", "platypus_dbm_test2");
+    let spec = |name: &str| DatabaseSpec {
+        name: name.to_owned(),
+        ..DatabaseSpec::default()
+    };
+    // What altering changes, and how the list shows it afterwards.
+    let alter = match b.config.driver {
+        DriverKind::Postgres => DatabaseSpec {
+            comment: Some("conformance".to_owned()),
+            connection_limit: Some(7),
+            ..spec(name)
+        },
+        DriverKind::MySql => DatabaseSpec {
+            encoding: Some("utf8mb4".to_owned()),
+            collation: Some("utf8mb4_bin".to_owned()),
+            ..spec(name)
+        },
+        DriverKind::SqlServer => DatabaseSpec {
+            rename_to: Some(renamed.to_owned()),
+            ..spec(name)
+        },
+        _ => DatabaseSpec {
+            comment: Some("conformance".to_owned()),
+            ..spec(name)
+        },
+    };
+    let current_name = b.config.database.clone();
+    // A leftover of an earlier run that did not get to clean up.
+    drop_test_databases(conn, dialect, &current_name, &[name, renamed]).await;
+
+    let outcome: Result<(), String> = async {
+        let step = |what: &'static str| move |e: Error| format!("{what}: {e}");
+        apply_database_change(
+            conn,
+            dialect,
+            &current_name,
+            &DatabaseChange::Create { spec: spec(name) },
+        )
+        .await
+        .map_err(step("create"))?;
+        let list = conn.database_details().await.map_err(step("details"))?;
+        let made = list
+            .iter()
+            .find(|d| d.name == name)
+            .ok_or(format!("created database missing: {list:?}"))?;
+        if made.current || made.system {
+            return Err(format!("created database flagged: {made:?}"));
+        }
+
+        apply_database_change(
+            conn,
+            dialect,
+            &current_name,
+            &DatabaseChange::Alter {
+                spec: alter.clone(),
+            },
+        )
+        .await
+        .map_err(step("alter"))?;
+        let list = conn.database_details().await.map_err(step("details"))?;
+        let name_now = alter.rename_to.as_deref().unwrap_or(name);
+        let altered = list
+            .iter()
+            .find(|d| d.name == name_now)
+            .ok_or(format!("altered database missing: {list:?}"))?;
+        if let Some(limit) = alter.connection_limit
+            && altered.connection_limit != Some(limit)
+        {
+            return Err(format!("connection limit not applied: {altered:?}"));
+        }
+        if alter.comment.is_some() && altered.comment != alter.comment {
+            return Err(format!("comment not applied: {altered:?}"));
+        }
+        if let Some(collation) = &alter.collation
+            && altered.collation.as_deref() != Some(collation.as_str())
+        {
+            return Err(format!("collation not applied: {altered:?}"));
+        }
+
+        apply_database_change(
+            conn,
+            dialect,
+            &current_name,
+            &DatabaseChange::Drop {
+                name: name_now.to_owned(),
+                force: false,
+            },
+        )
+        .await
+        .map_err(step("drop"))?;
+        let list = conn.database_details().await.map_err(step("details"))?;
+        if list.iter().any(|d| d.name == name || d.name == renamed) {
+            return Err(format!("dropped database still listed: {list:?}"));
+        }
+        Ok(())
+    }
+    .await;
+    drop_test_databases(conn, dialect, &current_name, &[name, renamed]).await;
+    if let Err(e) = outcome {
+        panic!("{}: databases round trip: {e}", b.name);
+    }
+}
+
+/// The databases the manager lists include the one the session is in, marked current and not
+/// system, and a database made, altered and dropped through `platypus_sql::databases` shows
+/// up (and goes away) in the list.
+#[tokio::test]
+async fn manages_databases() {
+    use platypus_core::DatabaseChange;
+
+    let _serial = SERIAL.lock().await;
+
+    for b in backends().await {
+        let conn = b.connect().await;
+        let caps = conn.capabilities();
+        let list = conn.database_details().await;
+        assert_eq!(
+            matches!(list, Err(Error::Unsupported(_))),
+            !caps.database_admin,
+            "{}: database_details vs capabilities.database_admin",
+            b.name
+        );
+        if !caps.database_admin {
+            continue;
+        }
+        let list = list.unwrap_or_else(|e| panic!("{}: database_details: {e}", b.name));
+        assert!(
+            list.windows(2).all(|w| w[0].name <= w[1].name),
+            "{}: not sorted: {list:?}",
+            b.name
+        );
+        let current: Vec<_> = list.iter().filter(|d| d.current).collect();
+        assert_eq!(current.len(), 1, "{}: current: {list:?}", b.name);
+        assert!(
+            current[0].name.eq_ignore_ascii_case(&b.config.database),
+            "{}: current {:?} vs {:?}",
+            b.name,
+            current[0].name,
+            b.config.database
+        );
+        assert!(!current[0].system, "{}: {:?}", b.name, current[0]);
+        assert!(
+            list.iter().any(|d| d.system),
+            "{}: no system database: {list:?}",
+            b.name
+        );
+
+        database_round_trip(&b, conn.as_ref()).await;
+
+        // The session's own database is refused before any statement is written.
+        let refused = platypus_sql::databases::statements(
+            platypus_sql::Dialect::from(b.config.driver),
+            &DatabaseChange::Drop {
+                name: b.config.database.clone(),
+                force: false,
+            },
+            Some(&b.config.database),
+        );
+        assert!(refused.is_err(), "{}: {refused:?}", b.name);
+    }
+}
+
 /// The load snapshot has its gauges and counters where the server keeps them, the counters
 /// do not go back between two snapshots, and what is missing says why.
 #[tokio::test]
