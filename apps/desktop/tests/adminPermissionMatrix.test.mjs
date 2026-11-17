@@ -1,7 +1,7 @@
 // Unit tests of the permission matrix's pure model (src/admin/permissionMatrixModel.ts).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildChanges, cellId, heldColumns, isChecked, matchesPrincipal, onDatabase, principalKey, rebaseEdits, toggleEdit } from "../src/admin/permissionMatrixModel.ts";
+import { buildChanges, cellId, heldColumns, isChecked, matchesPrincipal, onDatabase, principalKey, rebaseEdits, toggleCell, toggleEdit } from "../src/admin/permissionMatrixModel.ts";
 
 const grant = (over = {}) => ({ kind: "database", schema: "shop", object: null, column: null, privilege: "CONNECT", grantable: false, ...over });
 const user = (name, host = null) => ({ name, host, kind: "user", flags: [], member_of: [] });
@@ -94,4 +94,18 @@ test("rebaseEdits keeps only what the server does not have yet", () => {
   assert.equal(rebaseEdits(edits, before, new Map([["a@", new Set(["CREATE"])]])).size, 0);
   // A principal that can no longer be read loses its edits.
   assert.equal(rebaseEdits(edits, before, new Map([["a@", null]])).size, 0);
+});
+
+test("ALL is a shortcut for the other privileges", () => {
+  const cols = ["ALL", "CONNECT", "CREATE"];
+  const base = new Map([["a@", new Set(["CONNECT"])]]);
+  assert.equal(isChecked(base, new Set(), "a@", "ALL", cols), false);
+  const on = toggleCell(base, new Set(), "a@", "ALL", cols);
+  assert.equal(isChecked(base, on, "a@", "ALL", cols), true);
+  assert.deepEqual([...on], [cellId("a@", "CREATE")]);
+  const off = toggleCell(base, on, "a@", "ALL", cols);
+  assert.deepEqual([...off], [cellId("a@", "CONNECT")]);
+  const full = new Map([["a@", heldColumns([{ kind: "database", schema: "d", privilege: "ALL PRIVILEGES" }], "d", cols)]]);
+  assert.equal(isChecked(full, new Set(), "a@", "CREATE", cols), true);
+  assert.equal(isChecked(full, toggleCell(full, new Set(), "a@", "CREATE", cols), "a@", "ALL", cols), false);
 });

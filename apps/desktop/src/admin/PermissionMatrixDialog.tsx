@@ -13,7 +13,7 @@ import {
   matchesPrincipal,
   principalKey,
   rebaseEdits,
-  toggleEdit,
+  toggleCell,
 } from "./permissionMatrixModel";
 
 interface Props {
@@ -144,7 +144,7 @@ export function PermissionMatrixDialog({ connection, sideSession, database, onCl
 
   const flip = (principal: Principal, column: string) => {
     setApplied(null);
-    setEdits((old) => toggleEdit(old, cellId(principalKey(principal), column)));
+    setEdits((old) => toggleCell(grants.base, old, principalKey(principal), column, columns));
   };
 
   async function run() {
@@ -248,7 +248,7 @@ export function PermissionMatrixDialog({ connection, sideSession, database, onCl
                                   data-principal={p.name}
                                   data-privilege={c}
                                   disabled={waiting || running || connection.read_only}
-                                  checked={isChecked(grants.base, edits, id, c)}
+                                  checked={isChecked(grants.base, edits, id, c, columns)}
                                   aria-label={`${p.name} ${c}`}
                                   onChange={() => flip(p, c)}
                                 />

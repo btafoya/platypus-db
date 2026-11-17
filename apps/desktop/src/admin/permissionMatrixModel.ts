@@ -31,13 +31,13 @@ export function onDatabase(grant: PrivilegeGrant, database: string, unnamed = fa
 export function heldColumns(grants: PrivilegeGrant[], database: string, columns: string[], unnamed = false): Set<string> {
   const given = new Set(grants.filter((g) => onDatabase(g, database, unnamed)).map((g) => upper(g.privilege)));
   const held = new Set<string>();
+  const everything = given.has("ALL") || given.has("ALL PRIVILEGES");
   const others = columns.filter((c) => upper(c) !== ALL_COLUMN);
   for (const column of columns) {
     const name = upper(column);
     if (name === ALL_COLUMN) {
-      const all = given.has("ALL") || given.has("ALL PRIVILEGES") || (others.length > 0 && others.every((c) => given.has(upper(c))));
-      if (all) held.add(column);
-    } else if (given.has(name)) {
+      if (everything || (others.length > 0 && others.every((c) => given.has(upper(c))))) held.add(column);
+    } else if (everything || given.has(name)) {
       held.add(column);
     }
   }
@@ -55,10 +55,32 @@ export function toggleEdit(edits: ReadonlySet<string>, id: string): Set<string> 
   return next;
 }
 
-/** Whether the cell shows as checked: what the server has, flipped when edited. */
-export function isChecked(base: Base, edits: ReadonlySet<string>, key: string, column: string): boolean {
+/** Whether the cell shows as checked: what the server has, flipped when edited. The `ALL` cell
+ *  is checked when every other privilege of `columns` is: it is a shortcut for them, with no
+ *  edit of its own. */
+export function isChecked(base: Base, edits: ReadonlySet<string>, key: string, column: string, columns: string[] = []): boolean {
+  const others = columns.filter((c) => upper(c) !== ALL_COLUMN);
+  if (upper(column) === ALL_COLUMN && others.length > 0) {
+    return others.every((c) => isChecked(base, edits, key, c));
+  }
   const held = base.get(key)?.has(column) ?? false;
   return held !== edits.has(cellId(key, column));
+}
+
+/** The edits after a click on a cell. A click on `ALL` sets every other privilege to the
+ *  opposite of what the cell shows. */
+export function toggleCell(base: Base, edits: ReadonlySet<string>, key: string, column: string, columns: string[]): Set<string> {
+  const others = columns.filter((c) => upper(c) !== ALL_COLUMN);
+  if (upper(column) !== ALL_COLUMN || others.length === 0) return toggleEdit(edits, cellId(key, column));
+  const target = !isChecked(base, edits, key, column, columns);
+  const next = new Set(edits);
+  for (const c of others) {
+    const id = cellId(key, c);
+    if (isChecked(base, next, key, c) !== target) {
+      if (!next.delete(id)) next.add(id);
+    }
+  }
+  return next;
 }
 
 /** The changes the edits make: one per principal and action, privileges grouped, the revokes

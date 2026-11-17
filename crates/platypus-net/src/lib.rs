@@ -650,6 +650,10 @@ impl Connection for Held {
         self.inner.maintain(schema, table, operation).await
     }
 
+    async fn database_details(&self) -> Result<Vec<platypus_core::DatabaseInfo>> {
+        self.inner.database_details().await
+    }
+
     async fn principals(&self) -> Result<Vec<platypus_core::Principal>> {
         self.inner.principals().await
     }

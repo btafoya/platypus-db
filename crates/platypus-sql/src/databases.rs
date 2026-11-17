@@ -84,6 +84,28 @@ pub fn statements(
     }
 }
 
+/// The statements to run when `change` failed half way, to put the database back as it was:
+/// a forced drop on SQL Server leaves it in single-user mode if the `DROP` fails.
+#[must_use]
+pub fn recovery(dialect: Dialect, change: &DatabaseChange) -> Vec<String> {
+    match change {
+        DatabaseChange::Drop { name, force: true } if dialect == Dialect::SqlServer => {
+            vec![format!(
+                "ALTER DATABASE {} SET MULTI_USER",
+                dialect.quote_ident_always(name)
+            )]
+        }
+        _ => Vec::new(),
+    }
+}
+
+/// Whether the server can end the sessions connected to a database as it drops it:
+/// PostgreSQL's `WITH (FORCE)` came with version 13.
+#[must_use]
+pub fn force_drop_supported(dialect: Dialect, info: &platypus_core::ServerInfo) -> bool {
+    dialect != Dialect::Postgres || info.at_least(platypus_core::ServerVersion::new(13, 0, 0))
+}
+
 struct Writer {
     dialect: Dialect,
     allowed: Attributes,
@@ -101,6 +123,22 @@ impl Writer {
     /// Refuses a form field the database has no such attribute for.
     fn check(&self, spec: &DatabaseSpec, altering: bool) -> Result<(), Unsupported> {
         let a = self.allowed;
+        if spec
+            .rename_to
+            .as_deref()
+            .is_some_and(|t| t.trim().is_empty())
+        {
+            return Err("the new name is empty".to_owned());
+        }
+        if self.dialect == Dialect::SqlServer {
+            if let Some(c) = spec.collation.as_deref().filter(|c| !c.is_empty()) {
+                if !c.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '_') {
+                    return Err(
+                        "a collation name has letters, digits and underscores only".to_owned()
+                    );
+                }
+            }
+        }
         let fields = [
             (spec.owner.is_some(), a.owner, "an owner"),
             (spec.encoding.is_some(), a.encoding, "an encoding"),
@@ -127,9 +165,6 @@ impl Writer {
             && (spec.encoding.is_some() || spec.collation.is_some())
         {
             return Err("the encoding and collation of a database cannot be changed".to_owned());
-        }
-        if altering && self.dialect == Dialect::ClickHouse && spec.name.is_empty() {
-            return Err(NAME.to_owned());
         }
         Ok(())
     }
@@ -163,7 +198,9 @@ impl Writer {
                 out.push(sql);
             }
             Dialect::SqlServer => {
-                self.opt(&mut sql, "COLLATE", spec.collation.as_deref(), false);
+                if let Some(c) = spec.collation.as_deref().filter(|c| !c.is_empty()) {
+                    let _ = write!(sql, " COLLATE {c}");
+                }
                 out.push(sql);
                 if let Some(o) = spec.owner.as_deref().filter(|o| !o.is_empty()) {
                     out.push(self.authorization(name, o));
@@ -241,7 +278,11 @@ impl Writer {
         current: Option<&str>,
     ) -> Result<Vec<String>, Unsupported> {
         let name = named(name)?;
-        if current == Some(name) {
+        let same = |c: &str| match self.dialect {
+            Dialect::SqlServer | Dialect::MySql => c.eq_ignore_ascii_case(name),
+            _ => c == name,
+        };
+        if current.is_some_and(same) {
             return Err("the session is connected to this database: open another first".to_owned());
         }
         if force && !self.allowed.force_drop {
@@ -374,6 +415,36 @@ mod tests {
         assert!(run(Dialect::MySql, &d(" ", false)).is_err());
         assert!(statements(Dialect::MySql, &d("a", false), Some("a")).is_err());
         assert!(run(Dialect::Sqlite, &d("a", false)).is_err());
+    }
+
+    #[test]
+    fn sqlserver_collation_is_a_bare_name_and_checked() {
+        let mut s = spec("a");
+        s.collation = Some("Latin1_General_CI_AS".into());
+        let out = run(
+            Dialect::SqlServer,
+            &DatabaseChange::Create { spec: s.clone() },
+        )
+        .unwrap();
+        assert_eq!(out[0], "CREATE DATABASE [a] COLLATE Latin1_General_CI_AS");
+        s.collation = Some("x; DROP DATABASE y".into());
+        assert!(run(Dialect::SqlServer, &DatabaseChange::Alter { spec: s }).is_err());
+    }
+
+    #[test]
+    fn empty_rename_is_refused_and_recovery_restores_multi_user() {
+        let mut s = spec("a");
+        s.rename_to = Some(" ".into());
+        assert!(run(Dialect::Postgres, &DatabaseChange::Alter { spec: s }).is_err());
+        let drop = DatabaseChange::Drop {
+            name: "a".into(),
+            force: true,
+        };
+        assert_eq!(
+            recovery(Dialect::SqlServer, &drop),
+            vec!["ALTER DATABASE [a] SET MULTI_USER"]
+        );
+        assert!(recovery(Dialect::Postgres, &drop).is_empty());
     }
 
     #[test]
