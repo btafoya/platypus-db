@@ -39,6 +39,7 @@ pub use connection::{
     BulkRows, CancelHandle, Canceller, Connection, Driver, ExecOptions, ExecResult, Executed,
     NextResult, RecordBatchStream, ServerInfo, execute_each,
 };
+pub use databases::{DatabaseChange, DatabaseInfo, DatabaseSpec};
 pub use debug::{
     DEBUG_RESULT_ROWS, DebugArgument, DebugAvailability, DebugFrame, DebugOutcome, DebugParameter,
     DebugPosition, DebugRoutine, DebugSession, DebugState, DebugStep, DebugVariable, Debugger,
@@ -61,7 +62,6 @@ pub use metrics::{
     DatabaseSize, Metric, ReplicationRow, ServerMetrics, float_of, query_row, query_sizes,
 };
 pub use parameters::{ServerParameter, differs_from, same_value, set_value, sort_parameters};
-pub use databases::{DatabaseChange, DatabaseInfo, DatabaseSpec};
 pub use security::{
     DropOptions, GrantAction, GrantKind, GrantTarget, Grantee, Principal, PrincipalFlag,
     PrincipalKind, PrincipalSpec, PrivilegeGrant, SecurityChange, TargetClass, memberships,
