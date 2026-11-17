@@ -3392,6 +3392,17 @@ const fr: Record<string, string> = {
   "current": "actuelle",
   "Reading the databases…": "Lecture des bases de données…",
   "No databases match.": "Aucune base de données ne correspond.",
+  "Permissions…": "Autorisations…",
+  "Only the database the connection is in can be managed here": "Ici, seule la base de données de la connexion peut être gérée",
+  "Permissions on {name}": "Autorisations sur {name}",
+  "Tick the privileges a user or role is given on the database. Only what each was given itself is changed, not what it has through its roles.": "Cochez les privilèges qu'un utilisateur ou un rôle reçoit sur la base. Seul ce qui lui a été donné directement est modifié, pas ce qu'il a via ses rôles.",
+  "This server has no database-level privileges.": "Ce serveur n'a pas de privilèges au niveau de la base de données.",
+  "Filter users and roles": "Filtrer les utilisateurs et rôles",
+  "Reading the privileges… {done} of {total}": "Lecture des privilèges… {done} sur {total}",
+  "User or role": "Utilisateur ou rôle",
+  "Could not read: {error}": "Lecture impossible : {error}",
+  "Applied {n} change.": "{n} modification appliquée.",
+  "Applied {n} changes.": "{n} modifications appliquées.",
 };
 
 export default fr;

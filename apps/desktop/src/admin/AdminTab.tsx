@@ -438,7 +438,7 @@ export function AdminTab({ tab, connection, active, sideSession, onChange }: Tab
         </div>
       )}
       {!unreachable && view === "databases" && caps?.database_admin && (
-        <Databases connection={connection} active={active} refresh={version} sideSession={sideSession} />
+        <Databases connection={connection} active={active} refresh={version} security={!!caps.security} sideSession={sideSession} />
       )}
       {!unreachable && view === "users" && caps?.security && (
         <Users connection={connection} active={active} refresh={version} sideSession={sideSession} />

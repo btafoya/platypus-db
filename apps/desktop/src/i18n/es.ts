@@ -3392,6 +3392,17 @@ const es: Record<string, string> = {
   "current": "actual",
   "Reading the databases…": "Leyendo las bases de datos…",
   "No databases match.": "Ninguna base de datos coincide.",
+  "Permissions…": "Permisos…",
+  "Only the database the connection is in can be managed here": "Aquí solo se gestiona la base de datos en la que está la conexión",
+  "Permissions on {name}": "Permisos sobre {name}",
+  "Tick the privileges a user or role is given on the database. Only what each was given itself is changed, not what it has through its roles.": "Marca los privilegios que recibe un usuario o rol sobre la base de datos. Solo se cambia lo que se le dio directamente, no lo que tiene por sus roles.",
+  "This server has no database-level privileges.": "Este servidor no tiene privilegios a nivel de base de datos.",
+  "Filter users and roles": "Filtrar usuarios y roles",
+  "Reading the privileges… {done} of {total}": "Leyendo los privilegios… {done} de {total}",
+  "User or role": "Usuario o rol",
+  "Could not read: {error}": "No se pudo leer: {error}",
+  "Applied {n} change.": "{n} cambio aplicado.",
+  "Applied {n} changes.": "{n} cambios aplicados.",
 };
 
 export default es;

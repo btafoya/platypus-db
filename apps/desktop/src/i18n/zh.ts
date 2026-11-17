@@ -3392,6 +3392,17 @@ const zh: Record<string, string> = {
   "current": "当前",
   "Reading the databases…": "正在读取数据库…",
   "No databases match.": "没有匹配的数据库。",
+  "Permissions…": "权限…",
+  "Only the database the connection is in can be managed here": "此处只能管理连接所在的数据库",
+  "Permissions on {name}": "{name} 的权限",
+  "Tick the privileges a user or role is given on the database. Only what each was given itself is changed, not what it has through its roles.": "勾选用户或角色在该数据库上获得的权限。只更改直接授予的权限，不包括通过角色获得的权限。",
+  "This server has no database-level privileges.": "此服务器没有数据库级权限。",
+  "Filter users and roles": "筛选用户和角色",
+  "Reading the privileges… {done} of {total}": "正在读取权限… {done}/{total}",
+  "User or role": "用户或角色",
+  "Could not read: {error}": "无法读取：{error}",
+  "Applied {n} change.": "已应用 {n} 项更改。",
+  "Applied {n} changes.": "已应用 {n} 项更改。",
 };
 
 export default zh;

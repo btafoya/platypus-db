@@ -5,20 +5,23 @@ import { api, type DatabaseInfo, type DatabaseOptions, type SavedConnection, toC
 import { t } from "../i18n";
 import { EmptyState, LoadingState } from "../ui/State";
 import { DatabaseDialog, type DatabaseEnv, DropDatabaseDialog } from "./DatabaseDialogs";
+import { PermissionMatrixDialog } from "./PermissionMatrixDialog";
 import { dropRefusal, formatSize, matchesDatabase, sortDatabases } from "./databasesModel";
 
 /** The dialog that is open. */
-type Dialog = { kind: "new" } | { kind: "edit"; database: DatabaseInfo } | { kind: "drop"; database: DatabaseInfo };
+type Dialog = { kind: "permissions"; database: DatabaseInfo } | { kind: "new" } | { kind: "edit"; database: DatabaseInfo } | { kind: "drop"; database: DatabaseInfo };
 
 interface Props {
   connection: SavedConnection;
   active: boolean;
   /** Counts the refreshes asked from outside: the tab's button. */
   refresh: number;
+  /** Whether the server has users and privileges to manage (`caps.security`). */
+  security: boolean;
   sideSession: () => Promise<number | null>;
 }
 
-export function Databases({ connection, active, refresh, sideSession }: Props) {
+export function Databases({ connection, active, refresh, security, sideSession }: Props) {
   const [databases, setDatabases] = useState<DatabaseInfo[] | null>(null);
   const [options, setOptions] = useState<DatabaseOptions | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +62,10 @@ export function Databases({ connection, active, refresh, sideSession }: Props) {
   const refusal = chosen ? dropRefusal(chosen) : null;
   const dropWhy = readOnly ?? (refusal === "system" ? t("A database of the server cannot be dropped") : refusal === "current" ? t("The connection is using this database") : undefined);
 
+  // SQL Server's grants name no database: the matrix is of the one the session is in.
+  const permissionsWhy =
+    readOnly ?? (connection.driver === "sqlserver" && chosen && !chosen.current ? t("Only the database the connection is in can be managed here") : undefined);
+
   const env: DatabaseEnv | null = options
     ? { connection, sideSession, options, onDone: () => setReads((n) => n + 1), onClose: () => setDialog(null) }
     : null;
@@ -75,6 +82,16 @@ export function Databases({ connection, active, refresh, sideSession }: Props) {
         <button disabled={!chosen || !!dropWhy} title={dropWhy} data-action="drop" onClick={() => chosen && setDialog({ kind: "drop", database: chosen })}>
           {t("Drop…")}
         </button>
+        {security && (
+          <button
+            disabled={!chosen || !!permissionsWhy}
+            title={permissionsWhy}
+            data-action="permissions"
+            onClick={() => chosen && setDialog({ kind: "permissions", database: chosen })}
+          >
+            {t("Permissions…")}
+          </button>
+        )}
         <button disabled={loading} data-action="refresh" onClick={() => setReads((n) => n + 1)}>
           {t("Refresh")}
         </button>
@@ -130,6 +147,9 @@ export function Databases({ connection, active, refresh, sideSession }: Props) {
             <EmptyState compact className="admin-empty" title={t("No databases match.")} />
           ))}
       </div>
+      {dialog?.kind === "permissions" && (
+        <PermissionMatrixDialog connection={connection} sideSession={sideSession} database={dialog.database.name} onClose={() => setDialog(null)} />
+      )}
       {env && dialog?.kind === "new" && <DatabaseDialog env={env} />}
       {env && dialog?.kind === "edit" && <DatabaseDialog env={env} existing={dialog.database} />}
       {env && dialog?.kind === "drop" && <DropDatabaseDialog env={env} database={dialog.database} />}

@@ -3392,6 +3392,17 @@ const it: Record<string, string> = {
   "current": "corrente",
   "Reading the databases…": "Lettura dei database…",
   "No databases match.": "Nessun database corrisponde.",
+  "Permissions…": "Permessi…",
+  "Only the database the connection is in can be managed here": "Qui si gestisce solo il database a cui è connessa la connessione",
+  "Permissions on {name}": "Permessi su {name}",
+  "Tick the privileges a user or role is given on the database. Only what each was given itself is changed, not what it has through its roles.": "Spunta i privilegi che un utente o un ruolo riceve sul database. Si cambia solo ciò che gli è stato dato direttamente, non ciò che ha tramite i suoi ruoli.",
+  "This server has no database-level privileges.": "Questo server non ha privilegi a livello di database.",
+  "Filter users and roles": "Filtra utenti e ruoli",
+  "Reading the privileges… {done} of {total}": "Lettura dei privilegi… {done} di {total}",
+  "User or role": "Utente o ruolo",
+  "Could not read: {error}": "Lettura impossibile: {error}",
+  "Applied {n} change.": "Applicata {n} modifica.",
+  "Applied {n} changes.": "Applicate {n} modifiche.",
 };
 
 export default it;

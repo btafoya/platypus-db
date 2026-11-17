@@ -23,10 +23,11 @@ const NAME = "QA V PostgreSQL";
 const RO_NAME = "QA V PostgreSQL read-only";
 const NEW = "e2e_dbm_new";
 const RENAMED = "e2e_dbm_renamed";
+const ROLE = "e2e_dbm_role";
 
 export const skip = needs(DB);
 
-const cleanup = () => sh(DB, `DROP DATABASE IF EXISTS ${NEW} WITH (FORCE); DROP DATABASE IF EXISTS ${RENAMED} WITH (FORCE);`);
+const cleanup = () => sh(DB, `DROP DATABASE IF EXISTS ${NEW} WITH (FORCE); DROP DATABASE IF EXISTS ${RENAMED} WITH (FORCE); DROP ROLE IF EXISTS ${ROLE};`);
 
 export function setup({ dir }) {
   usersConnections(dir, [[NAME, DB], [RO_NAME, DB, "read_only = true\n"]], DBS);
@@ -102,6 +103,65 @@ async function create(page) {
   assert.equal(await page.eval(`${row(NEW)}.querySelector('.admin-query').textContent`), "made by the e2e");
 }
 
+const cell = (privilege) => inDialog(`input[data-principal="${ROLE}"][data-privilege="${privilege}"]`);
+const granted = () =>
+  sh(DB, `SELECT count(*) FROM pg_database d, aclexplode(d.datacl) a WHERE d.datname = '${NEW}' AND a.privilege_type = 'CONNECT' AND a.grantee = '${ROLE}'::regrole`);
+
+/** Permissions: the matrix lists the roles against the database's privileges, a toggle only
+ *  marks a cell, the preview shows the GRANT and the REVOKE, Reset undoes the marks, Apply
+ *  runs the statements and a new matrix reads them back. */
+async function permissions(page) {
+  sh(DB, `CREATE ROLE ${ROLE} NOLOGIN`);
+  await select(page, NEW);
+  assert.equal(await page.eval(`${button("permissions")}.disabled`), false);
+  await openDialog(page, button("permissions"));
+  await page.waitFor(`${cell("CONNECT")} !== null && ${cell("CONNECT")}.disabled === false`, 20_000);
+  const privileges = await page.eval(`[...${dialog}.querySelectorAll('thead th.permission-cell')].map((th) => th.textContent)`);
+  assert.ok(privileges.includes("CONNECT") && privileges.includes("CREATE"), privileges.join());
+  assert.equal(await page.eval(`${cell("CONNECT")}.checked`), false);
+  assert.equal(await canRun(page), false, "no change yet");
+  assert.equal(await page.eval(`${inDialog('[data-field="preview"]')}.textContent`), "No changes.");
+
+  // The filter keeps the role only.
+  await setField(page, "filter", "no-such-principal");
+  await page.waitFor(`${cell("CONNECT")} === null`, 5_000);
+  await setField(page, "filter", ROLE);
+  await page.waitFor(`${cell("CONNECT")} !== null`, 5_000);
+
+  // A toggle marks the cell and writes the GRANT; a second toggle takes both back.
+  await page.eval(`${cell("CONNECT")}.click()`);
+  assert.ok((await waitPreview(page, "GRANT")).includes(`GRANT CONNECT ON DATABASE ${NEW} TO ${ROLE}`));
+  assert.equal(await page.eval(`${cell("CONNECT")}.closest('td').dataset.dirty`), "true");
+  await page.eval(`${cell("CONNECT")}.click()`);
+  await page.waitFor(`${inDialog('[data-field="preview"]')}.textContent === 'No changes.'`, 5_000);
+  await page.eval(`${cell("CONNECT")}.click()`);
+  await waitPreview(page, "GRANT");
+  // Reset puts everything back.
+  await page.eval(`${inDialog('button[data-action="reset"]')}.click()`);
+  await page.waitFor(`${cell("CONNECT")}.checked === false && ${inDialog('[data-field="preview"]')}.textContent === 'No changes.'`, 5_000);
+  assert.equal(await canRun(page), false);
+
+  await page.eval(`${cell("CONNECT")}.click()`);
+  await waitPreview(page, `GRANT CONNECT ON DATABASE ${NEW} TO ${ROLE}`);
+  await page.eval(`${inDialog('button[data-action="run"]')}.click()`);
+  await page.waitFor(`${inDialog('[data-field="applied"]')} !== null`, 15_000);
+  assert.equal(granted(), "1");
+  // Read back: the cell is checked and no longer marked.
+  await page.waitFor(`${cell("CONNECT")}.checked === true && ${cell("CONNECT")}.closest('td').dataset.dirty === 'false'`, 15_000);
+  await cancelDialog(page);
+
+  // A new matrix shows it checked; taking it away writes a REVOKE.
+  await openDialog(page, button("permissions"));
+  await page.waitFor(`${cell("CONNECT")} !== null && ${cell("CONNECT")}.disabled === false`, 20_000);
+  assert.equal(await page.eval(`${cell("CONNECT")}.checked`), true);
+  await page.eval(`${cell("CONNECT")}.click()`);
+  assert.ok((await waitPreview(page, "REVOKE")).includes(`REVOKE CONNECT ON DATABASE ${NEW} FROM ${ROLE}`));
+  await page.eval(`${inDialog('button[data-action="run"]')}.click()`);
+  await page.waitFor(`${inDialog('[data-field="applied"]')} !== null`, 15_000);
+  assert.equal(granted(), "0");
+  await cancelDialog(page);
+}
+
 /** Edit: the form starts from the database, nothing to change cannot run, the encoding is
  *  refused with the server's reason, then comment, limit and a rename go through. */
 async function edit(page) {
@@ -163,6 +223,7 @@ export default async function (page) {
     await openDatabases(page, NAME);
     await checkList(page);
     await create(page);
+    await permissions(page);
     await edit(page);
     await drop(page);
 
@@ -173,6 +234,7 @@ export default async function (page) {
     assert.equal(await page.eval(`${button("edit")}.disabled`), true);
     assert.equal(await page.eval(`${button("drop")}.disabled`), true);
     assert.equal(await page.eval(`${button("new")}.title`), "The connection is read-only");
+    assert.equal(await page.eval(`${button("permissions")}.disabled`), true);
     assert.equal(await page.eval(`${dialog}`), null);
   } finally {
     cleanup();
