@@ -130,14 +130,11 @@ impl Writer {
         {
             return Err("the new name is empty".to_owned());
         }
-        if self.dialect == Dialect::SqlServer {
-            if let Some(c) = spec.collation.as_deref().filter(|c| !c.is_empty()) {
-                if !c.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '_') {
-                    return Err(
-                        "a collation name has letters, digits and underscores only".to_owned()
-                    );
-                }
-            }
+        let bad_collation = |c: &str| !c.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '_');
+        if self.dialect == Dialect::SqlServer
+            && spec.collation.as_deref().is_some_and(bad_collation)
+        {
+            return Err("a collation name has letters, digits and underscores only".to_owned());
         }
         let fields = [
             (spec.owner.is_some(), a.owner, "an owner"),
@@ -444,7 +441,7 @@ mod tests {
             recovery(Dialect::SqlServer, &drop),
             vec!["ALTER DATABASE [a] SET MULTI_USER"]
         );
-        assert!(recovery(Dialect::Postgres, &drop).is_empty());
+        assert_eq!(recovery(Dialect::Postgres, &drop), Vec::<String>::new());
     }
 
     #[test]

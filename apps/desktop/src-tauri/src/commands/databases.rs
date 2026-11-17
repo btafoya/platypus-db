@@ -80,7 +80,7 @@ pub async fn apply_database(
         for sql in databases::recovery(dialect, &change) {
             let _ = one_off(&conn, run(sql)).await;
         }
-        return Err(e.into());
+        return Err(e);
     }
     Ok(shown)
 }
@@ -96,18 +96,18 @@ async fn statements(
     let mut current = state.session(session_id)?.config.database.clone();
     if matches!(change, DatabaseChange::Drop { .. }) {
         let conn = state.live(session_id).await?;
-        if let Ok(all) = conn.database_details().await {
-            if let Some(db) = all.into_iter().find(|d| d.current) {
-                current = db.name;
-            }
+        if let Ok(all) = conn.database_details().await
+            && let Some(db) = all.into_iter().find(|d| d.current)
+        {
+            current = db.name;
         }
-        if let DatabaseChange::Drop { force: true, .. } = change {
-            if !databases::force_drop_supported(dialect, conn.server_info()) {
-                return Err(CommandError::new(
-                    "invalid_database_change",
-                    "this server cannot end the sessions connected to a database as it drops it",
-                ));
-            }
+        if let DatabaseChange::Drop { force: true, .. } = change
+            && !databases::force_drop_supported(dialect, conn.server_info())
+        {
+            return Err(CommandError::new(
+                "invalid_database_change",
+                "this server cannot end the sessions connected to a database as it drops it",
+            ));
         }
     }
     databases::statements(
