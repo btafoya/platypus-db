@@ -1483,11 +1483,14 @@ i comandi Tauri relativi, la UI di esportazione e il flusso "Importa le connessi
 `database_details`, capacità `database_admin`), le istruzioni per PostgreSQL, MySQL, SQL Server
 e ClickHouse in `platypus_sql::databases`, `database_details` nei quattro driver, i comandi
 Tauri, la vista "Databases" nella scheda Admin (elenco, crea, modifica, elimina con nome da
-scrivere, anteprima SQL) e la matrice dei permessi per database. Da fare: eseguire la
-conformance e gli E2E con Docker (finora solo compilati), Oracle, i database su file e i
-driver P3. Una scheda "Gestione" per connessione, in stile Navicat, con due pannelli:
-**Database** (creare, modificare, eliminare) e **Utenti e ruoli** (quelli del gruppo J, spostati qui
-e arricchiti con una matrice dei permessi). Oggi `Connection::databases()` elenca i database e il
+scrivere, anteprima SQL) e la matrice dei permessi per database. Provato su server veri:
+PostgreSQL 16 (conformance completa, 91 test) e MySQL 8.0 (`manages_databases`). **Da provare**
+(serve Docker e Windows): conformance su SQL Server, ClickHouse e MariaDB, lo scenario E2E
+`admin-databases-postgres` e la matrice dei permessi su MySQL, SQL Server e ClickHouse. Da fare:
+Oracle, i database su file e i driver P3. Una scheda per connessione (la scheda Admin, che già
+ospita Utenti e ruoli) con due pannelli:
+**Database** (creare, modificare, eliminare) e **Utenti e ruoli** (quelli del gruppo J)
+con una matrice dei permessi. Oggi `Connection::databases()` elenca i database e il
 gruppo J gestisce utenti, ruoli e privilegi (`principals`, `principal_privileges`, capacità
 `security`), ma non si può creare, modificare o eliminare un database dall'app.
 
@@ -1496,8 +1499,8 @@ gruppo J gestisce utenti, ruoli e privilegi (`principals`, `principal_privileges
   I database su file (SQLite, DuckDB, libSQL) solo crea/elimina file. Mongo, Redis, Cassandra e
   Search restano fuori (funzionalità P3). Le azioni non supportate si nascondono con una capacità
   `database_admin`.
-- **Posizione:** una scheda per connessione (registro dei tipi di tab, 0.3), con lo stile e i
-  componenti di `admin/` (`admin.css`, `AdminSplit`).
+- **Posizione:** una vista "Databases" nella scheda Admin esistente, con lo stile e i
+  componenti di `admin/` (`admin.css`, `AdminSplit`); gli Utenti restano dove sono.
 - **Sicurezza:** ogni modifica ha l'anteprima SQL; l'eliminazione richiede di scrivere il nome del
   database; valgono le protezioni di sola lettura e produzione del gruppo L.
 - **Permessi:** matrice di caselle (utente o ruolo, ambito server/database/schema/tabella,
