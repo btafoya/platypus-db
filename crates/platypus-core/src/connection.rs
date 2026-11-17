@@ -150,6 +150,12 @@ pub trait Connection: Send + Sync + fmt::Debug {
         Err(unsupported("listing databases"))
     }
 
+    /// The databases of the server with their owner, encoding, size and the like, sorted by
+    /// name. Optional: see [`Capabilities::database_admin`].
+    async fn database_details(&self) -> Result<Vec<crate::DatabaseInfo>> {
+        Err(unsupported("database details"))
+    }
+
     /// The sessions of the server, the one asking included (marked
     /// [`current`](crate::ServerSession::current)), with the statements they run; those of
     /// other users only where the session may see them. Optional: see

@@ -309,6 +309,8 @@ export interface Capabilities {
   server_metrics: boolean;
   /** Routines can be debugged step by step (PL/pgSQL), where the server has the debugger. */
   debugger: boolean;
+  /** The databases of the server can be listed with their attributes and created, altered and dropped. */
+  database_admin: boolean;
 }
 
 /** Whether a database can debug routines now; see `platypus_core::DebugAvailability`. */

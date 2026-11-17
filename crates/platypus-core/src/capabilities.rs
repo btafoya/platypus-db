@@ -59,6 +59,10 @@ pub struct Capabilities {
     /// by step, where the server has the debugger (see
     /// [`Debugger::availability`](crate::Debugger::availability)).
     pub debugger: bool,
+    /// [`Connection::database_details`](crate::Connection::database_details): the databases
+    /// of the server can be listed with their attributes, and `platypus_sql::databases`
+    /// writes the statements that create, alter and drop them.
+    pub database_admin: bool,
 }
 
 /// The error a `Connection` method returns when the driver does not implement it.
