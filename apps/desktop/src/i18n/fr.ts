@@ -3376,6 +3376,22 @@ const fr: Record<string, string> = {
   "Db2 alias {alias} has no host: fill in the host, port and database before connecting.": "L'alias Db2 {alias} n'a pas d'hôte : renseignez l'hôte, le port et la base avant de vous connecter.",
   "{agent} proposed changes to data, but {name} could not be connected, so they were not opened.": "{agent} a proposé des modifications de données, mais {name} n'a pas pu être connectée : elles n'ont pas été ouvertes.",
   "{agent} proposed changes to {table}, but {name} could not be connected, so they were not opened.": "{agent} a proposé des modifications de {table}, mais {name} n'a pas pu être connectée : elles n'ont pas été ouvertes.",
+  "New database": "Nouvelle base de données",
+  "Changes the attributes of the database; only what differs is written.": "Modifie les attributs de la base ; seul ce qui diffère est écrit.",
+  "Creates the database on the server.": "Crée la base de données sur le serveur.",
+  "Rename to": "Renommer en",
+  "Keep the name": "Garder le nom",
+  "Owner": "Propriétaire",
+  "Removes the database with everything in it. It cannot be undone.": "Supprime la base de données avec tout son contenu. Impossible à annuler.",
+  "End the sessions connected to it first": "Terminer d'abord les sessions connectées",
+  "Type {name} to confirm": "Saisissez {name} pour confirmer",
+  "A database of the server cannot be dropped": "Une base de données du serveur ne peut pas être supprimée",
+  "The connection is using this database": "La connexion utilise cette base de données",
+  "New database…": "Nouvelle base de données…",
+  "Filter by name, owner or comment": "Filtrer par nom, propriétaire ou commentaire",
+  "current": "actuelle",
+  "Reading the databases…": "Lecture des bases de données…",
+  "No databases match.": "Aucune base de données ne correspond.",
 };
 
 export default fr;

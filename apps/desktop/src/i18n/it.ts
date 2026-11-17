@@ -3376,6 +3376,22 @@ const it: Record<string, string> = {
   "Db2 alias {alias} has no host: fill in the host, port and database before connecting.": "L'alias Db2 {alias} non ha un host: inserisci host, porta e database prima di connetterti.",
   "{agent} proposed changes to data, but {name} could not be connected, so they were not opened.": "{agent} ha proposto modifiche ai dati, ma non è stato possibile connettersi a {name}: non sono state aperte.",
   "{agent} proposed changes to {table}, but {name} could not be connected, so they were not opened.": "{agent} ha proposto modifiche a {table}, ma non è stato possibile connettersi a {name}: non sono state aperte.",
+  "New database": "Nuovo database",
+  "Changes the attributes of the database; only what differs is written.": "Modifica gli attributi del database; si scrive solo ciò che cambia.",
+  "Creates the database on the server.": "Crea il database sul server.",
+  "Rename to": "Rinomina in",
+  "Keep the name": "Mantieni il nome",
+  "Owner": "Proprietario",
+  "Removes the database with everything in it. It cannot be undone.": "Elimina il database con tutto ciò che contiene. Non si può annullare.",
+  "End the sessions connected to it first": "Termina prima le sessioni connesse",
+  "Type {name} to confirm": "Scrivi {name} per confermare",
+  "A database of the server cannot be dropped": "Un database del server non si può eliminare",
+  "The connection is using this database": "La connessione sta usando questo database",
+  "New database…": "Nuovo database…",
+  "Filter by name, owner or comment": "Filtra per nome, proprietario o commento",
+  "current": "corrente",
+  "Reading the databases…": "Lettura dei database…",
+  "No databases match.": "Nessun database corrisponde.",
 };
 
 export default it;

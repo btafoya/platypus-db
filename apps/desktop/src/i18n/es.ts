@@ -3376,6 +3376,22 @@ const es: Record<string, string> = {
   "Db2 alias {alias} has no host: fill in the host, port and database before connecting.": "El alias de Db2 {alias} no tiene host: indica host, puerto y base de datos antes de conectar.",
   "{agent} proposed changes to data, but {name} could not be connected, so they were not opened.": "{agent} propuso cambios en los datos, pero no se pudo conectar con {name}, así que no se abrieron.",
   "{agent} proposed changes to {table}, but {name} could not be connected, so they were not opened.": "{agent} propuso cambios en {table}, pero no se pudo conectar con {name}, así que no se abrieron.",
+  "New database": "Nueva base de datos",
+  "Changes the attributes of the database; only what differs is written.": "Cambia los atributos de la base de datos; solo se escribe lo que difiere.",
+  "Creates the database on the server.": "Crea la base de datos en el servidor.",
+  "Rename to": "Renombrar a",
+  "Keep the name": "Mantener el nombre",
+  "Owner": "Propietario",
+  "Removes the database with everything in it. It cannot be undone.": "Elimina la base de datos con todo su contenido. No se puede deshacer.",
+  "End the sessions connected to it first": "Terminar antes las sesiones conectadas",
+  "Type {name} to confirm": "Escribe {name} para confirmar",
+  "A database of the server cannot be dropped": "Una base de datos del servidor no se puede eliminar",
+  "The connection is using this database": "La conexión está usando esta base de datos",
+  "New database…": "Nueva base de datos…",
+  "Filter by name, owner or comment": "Filtrar por nombre, propietario o comentario",
+  "current": "actual",
+  "Reading the databases…": "Leyendo las bases de datos…",
+  "No databases match.": "Ninguna base de datos coincide.",
 };
 
 export default es;

@@ -3376,6 +3376,22 @@ const pt: Record<string, string> = {
   "Db2 alias {alias} has no host: fill in the host, port and database before connecting.": "O alias Db2 {alias} não tem host: informe host, porta e banco de dados antes de conectar.",
   "{agent} proposed changes to data, but {name} could not be connected, so they were not opened.": "{agent} propôs alterações nos dados, mas não foi possível conectar a {name}, então elas não foram abertas.",
   "{agent} proposed changes to {table}, but {name} could not be connected, so they were not opened.": "{agent} propôs alterações em {table}, mas não foi possível conectar a {name}, então elas não foram abertas.",
+  "New database": "Novo banco de dados",
+  "Changes the attributes of the database; only what differs is written.": "Altera os atributos do banco de dados; só o que difere é escrito.",
+  "Creates the database on the server.": "Cria o banco de dados no servidor.",
+  "Rename to": "Renomear para",
+  "Keep the name": "Manter o nome",
+  "Owner": "Proprietário",
+  "Removes the database with everything in it. It cannot be undone.": "Remove o banco de dados com tudo o que contém. Não pode ser desfeito.",
+  "End the sessions connected to it first": "Encerrar antes as sessões conectadas",
+  "Type {name} to confirm": "Digite {name} para confirmar",
+  "A database of the server cannot be dropped": "Um banco de dados do servidor não pode ser removido",
+  "The connection is using this database": "A conexão está usando este banco de dados",
+  "New database…": "Novo banco de dados…",
+  "Filter by name, owner or comment": "Filtrar por nome, proprietário ou comentário",
+  "current": "atual",
+  "Reading the databases…": "Lendo os bancos de dados…",
+  "No databases match.": "Nenhum banco de dados corresponde.",
 };
 
 export default pt;

@@ -645,3 +645,12 @@
   max-height: 200px;
   overflow: auto;
 }
+
+/* Databases: the server's own databases dimmed, the one in use marked. */
+.admin-database.system td {
+  color: var(--fg-muted);
+}
+
+.database-current {
+  margin-left: var(--space-8);
+}

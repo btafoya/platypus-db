@@ -756,6 +756,53 @@ export type SecurityChange =
     }
   | { change: "membership"; action: "grant" | "revoke"; role: string; members: Grantee[]; admin_option: boolean };
 
+/** One database of the server, as the manager lists it; see `platypus_core::DatabaseInfo`. */
+export interface DatabaseInfo {
+  name: string;
+  owner?: string | null;
+  encoding?: string | null;
+  collation?: string | null;
+  size_bytes?: number | null;
+  connections?: number | null;
+  connection_limit?: number | null;
+  comment?: string | null;
+  /** A database the server needs: listed, never dropped. */
+  system: boolean;
+  /** The one the session is connected to: it cannot be dropped from itself. */
+  current: boolean;
+}
+
+/** A database to create or alter; see `platypus_core::DatabaseSpec`. */
+export interface DatabaseSpec {
+  name: string;
+  owner?: string | null;
+  encoding?: string | null;
+  collation?: string | null;
+  template?: string | null;
+  /** `-1` removes the limit. */
+  connection_limit?: number | null;
+  comment?: string | null;
+  rename_to?: string | null;
+}
+
+/** A change to the databases of a server; see `platypus_core::DatabaseChange`. */
+export type DatabaseChange =
+  | { change: "create"; spec: DatabaseSpec }
+  | { change: "alter"; spec: DatabaseSpec }
+  | { change: "drop"; name: string; force: boolean };
+
+/** What the form of a database takes on this server. */
+export interface DatabaseOptions {
+  owner: boolean;
+  encoding: boolean;
+  collation: boolean;
+  template: boolean;
+  connection_limit: boolean;
+  comment: boolean;
+  rename: boolean;
+  force_drop: boolean;
+}
+
 /** What the form of a database offers: its attributes, and the privileges on each kind of
  *  object (a kind with none cannot be granted on). */
 export interface SecurityOptions {
@@ -2977,6 +3024,14 @@ export const api = {
   /** Runs `change` and returns its statements as shown (a password masked). */
   applySecurity: (sessionId: number, change: SecurityChange) =>
     invoke<string[]>("apply_security", { sessionId, change }),
+  listDatabaseDetails: (sessionId: number) => invoke<DatabaseInfo[]>("list_database_details", { sessionId }),
+  databaseOptions: (sessionId: number) => invoke<DatabaseOptions>("database_options", { sessionId }),
+  /** The statements of `change`. */
+  databasePreview: (sessionId: number, change: DatabaseChange) =>
+    invoke<string[]>("database_preview", { sessionId, change }),
+  /** Runs `change` and returns its statements. */
+  applyDatabase: (sessionId: number, change: DatabaseChange) =>
+    invoke<string[]>("apply_database", { sessionId, change }),
   endServerSession: (sessionId: number, id: string, how: EndSession) =>
     invoke<void>("end_server_session", { sessionId, id, how }),
   /** Whether the database can debug routines, and routine `schema.name(argument types)`. */

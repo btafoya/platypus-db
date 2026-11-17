@@ -3376,6 +3376,22 @@ const zh: Record<string, string> = {
   "Db2 alias {alias} has no host: fill in the host, port and database before connecting.": "Db2 别名 {alias} 没有主机：连接前请填写主机、端口和数据库。",
   "{agent} proposed changes to data, but {name} could not be connected, so they were not opened.": "{agent} 提议修改数据，但无法连接 {name}，因此没有打开。",
   "{agent} proposed changes to {table}, but {name} could not be connected, so they were not opened.": "{agent} 提议修改 {table}，但无法连接 {name}，因此没有打开。",
+  "New database": "新建数据库",
+  "Changes the attributes of the database; only what differs is written.": "修改数据库的属性；只写入有变化的部分。",
+  "Creates the database on the server.": "在服务器上创建数据库。",
+  "Rename to": "重命名为",
+  "Keep the name": "保留名称",
+  "Owner": "所有者",
+  "Removes the database with everything in it. It cannot be undone.": "删除数据库及其全部内容。无法撤销。",
+  "End the sessions connected to it first": "先结束已连接的会话",
+  "Type {name} to confirm": "输入 {name} 以确认",
+  "A database of the server cannot be dropped": "无法删除服务器自带的数据库",
+  "The connection is using this database": "连接正在使用此数据库",
+  "New database…": "新建数据库…",
+  "Filter by name, owner or comment": "按名称、所有者或注释筛选",
+  "current": "当前",
+  "Reading the databases…": "正在读取数据库…",
+  "No databases match.": "没有匹配的数据库。",
 };
 
 export default zh;
