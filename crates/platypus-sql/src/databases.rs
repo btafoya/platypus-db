@@ -4,6 +4,8 @@
 //!
 //! The app shows the statements before they run and writes them to its query log.
 
+use std::fmt::Write as _;
+
 use platypus_core::{DatabaseChange, DatabaseSpec};
 
 use crate::Dialect;
@@ -147,10 +149,10 @@ impl Writer {
                 self.opt(&mut sql, "ENCODING", spec.encoding.as_deref(), false);
                 if let Some(c) = spec.collation.as_deref().filter(|c| !c.is_empty()) {
                     let lit = self.lit(c);
-                    sql.push_str(&format!(" LC_COLLATE {lit} LC_CTYPE {lit}"));
+                    let _ = write!(sql, " LC_COLLATE {lit} LC_CTYPE {lit}");
                 }
                 if let Some(n) = spec.connection_limit {
-                    sql.push_str(&format!(" CONNECTION LIMIT {n}"));
+                    let _ = write!(sql, " CONNECTION LIMIT {n}");
                 }
                 out.push(sql);
                 self.comment(&mut out, name, spec.comment.as_deref());
@@ -169,7 +171,7 @@ impl Writer {
             }
             _ => {
                 if let Some(c) = spec.comment.as_deref().filter(|c| !c.is_empty()) {
-                    sql.push_str(&format!(" COMMENT {}", self.lit(c)));
+                    let _ = write!(sql, " COMMENT {}", self.lit(c));
                 }
                 out.push(sql);
             }
@@ -216,7 +218,10 @@ impl Writer {
             }
             _ => {
                 if let Some(c) = spec.comment.as_deref() {
-                    out.push(format!("ALTER DATABASE {id} MODIFY COMMENT {}", self.lit(c)));
+                    out.push(format!(
+                        "ALTER DATABASE {id} MODIFY COMMENT {}",
+                        self.lit(c)
+                    ));
                 }
                 if let Some(to) = spec.rename_to.as_deref().filter(|t| *t != name) {
                     out.push(format!("RENAME DATABASE {id} TO {}", self.id(to)));
@@ -257,7 +262,7 @@ impl Writer {
     fn opt(&self, sql: &mut String, keyword: &str, value: Option<&str>, ident: bool) {
         if let Some(v) = value.filter(|v| !v.is_empty()) {
             let v = if ident { self.id(v) } else { self.lit(v) };
-            sql.push_str(&format!(" {keyword} {v}"));
+            let _ = write!(sql, " {keyword} {v}");
         }
     }
 
