@@ -102,9 +102,6 @@ export function alterSpec(existing: DatabaseInfo, form: DatabaseForm, offered: D
   return spec;
 }
 
-/** Whether the manager lets `info` be dropped: not a server database, not the one in use. */
-export const droppable = (info: DatabaseInfo) => !info.system && !info.current;
-
 /** Why `info` cannot be dropped, or `null` when it can. */
 export function dropRefusal(info: DatabaseInfo): "system" | "current" | null {
   if (info.system) return "system";

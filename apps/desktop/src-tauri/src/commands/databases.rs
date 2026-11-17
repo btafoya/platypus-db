@@ -70,12 +70,11 @@ async fn statements(
     session_id: u64,
     change: &DatabaseChange,
 ) -> CommandResult<Vec<String>> {
-    let dialect = Dialect::from(state.session(session_id)?.config.driver);
-    let current = state.session(session_id)?.config.database.clone();
+    let session = state.session(session_id)?;
     databases::statements(
-        dialect,
+        Dialect::from(session.config.driver),
         change,
-        Some(current.as_str()).filter(|d| !d.is_empty()),
+        Some(session.config.database.as_str()).filter(|d| !d.is_empty()),
     )
     .map_err(|e| CommandError::new("invalid_database_change", e))
 }

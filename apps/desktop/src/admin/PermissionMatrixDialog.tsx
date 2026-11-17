@@ -44,6 +44,8 @@ interface Grants {
   total: number;
 }
 
+const NO_COLUMNS: string[] = [];
+const NO_PRINCIPALS: Principal[] = [];
 const EMPTY_GRANTS: Grants = { base: new Map(), errors: new Map(), done: 0, total: 0 };
 
 export function PermissionMatrixDialog({ connection, sideSession, database, onClose }: Props) {
@@ -105,8 +107,8 @@ export function PermissionMatrixDialog({ connection, sideSession, database, onCl
     };
   }, [reads]);
 
-  const columns = loaded?.columns ?? [];
-  const principals = loaded?.principals ?? [];
+  const columns = loaded?.columns ?? NO_COLUMNS;
+  const principals = loaded?.principals ?? NO_PRINCIPALS;
   const shown = principals.filter((p) => matchesPrincipal(p, filter));
   const reading = !!loaded && grants.done < grants.total && columns.length > 0;
   const changes = useMemo(

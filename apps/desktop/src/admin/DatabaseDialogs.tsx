@@ -102,7 +102,8 @@ function Frame({ env, title, description, confirm, danger, change, problem, bloc
     }
   }
 
-  const shown = statements ? `${statements.join(";\n")};` : problem ? t(problem) : "…";
+  const script = statements ? `${statements.join(";\n")};` : null;
+  const shown = script ?? (problem ? t(problem) : "…");
   return (
     <div className="modal-backdrop" onMouseDown={env.onClose}>
       <form
@@ -138,10 +139,10 @@ function Frame({ env, title, description, confirm, danger, change, problem, bloc
           <button
             type="button"
             className="link"
-            disabled={!statements}
+            disabled={!script}
             onClick={() => {
-              if (!statements) return;
-              workbench().openTab("query", connection.id, { sql: `${statements.join(";\n")};` });
+              if (!script) return;
+              workbench().openTab("query", connection.id, { sql: script });
               env.onClose();
             }}
           >
