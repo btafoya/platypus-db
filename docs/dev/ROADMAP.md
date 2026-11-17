@@ -1479,7 +1479,13 @@ i comandi Tauri relativi, la UI di esportazione e il flusso "Importa le connessi
 
 ### Gruppo V — Gestione dei database (Database Manager)
 
-**Stato: da fare.** Una scheda "Gestione" per connessione, in stile Navicat, con due pannelli:
+**Stato: in corso.** Fatto: contratto nel core (`DatabaseInfo`, `DatabaseSpec`, `DatabaseChange`,
+`database_details`, capacità `database_admin`), le istruzioni per PostgreSQL, MySQL, SQL Server
+e ClickHouse in `platypus_sql::databases`, `database_details` nei quattro driver, i comandi
+Tauri, la vista "Databases" nella scheda Admin (elenco, crea, modifica, elimina con nome da
+scrivere, anteprima SQL) e la matrice dei permessi per database. Da fare: eseguire la
+conformance e gli E2E con Docker (finora solo compilati), Oracle, i database su file e i
+driver P3. Una scheda "Gestione" per connessione, in stile Navicat, con due pannelli:
 **Database** (creare, modificare, eliminare) e **Utenti e ruoli** (quelli del gruppo J, spostati qui
 e arricchiti con una matrice dei permessi). Oggi `Connection::databases()` elenca i database e il
 gruppo J gestisce utenti, ruoli e privilegi (`principals`, `principal_privileges`, capacità
