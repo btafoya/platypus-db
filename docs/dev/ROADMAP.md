@@ -131,7 +131,7 @@ blocco cade.
 | S — Collaudo finale | ✅ fatto (P1 in parte: inventario, giro per aree, tutti i database, percorsi da utente, secondo giro, aggiornamento dei dati; P2: revisione di sicurezza, prestazioni) |
 | T — Revisione UX | ✅ completato |
 | U — Esportazione delle connessioni | ✅ completato |
-| V — Gestione dei database | libero |
+| V — Gestione dei database | 🔒 Claude · claude/database-management-ui-plan-qwwh7w · 2026-11-17 |
 | Progetti (spazi di lavoro) | ✅ fatto (parte B) |
 
 ### Gruppo A — Modifica dei dati
