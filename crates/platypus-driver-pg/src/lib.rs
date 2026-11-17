@@ -10,6 +10,7 @@ mod admin;
 #[doc(hidden)]
 pub mod columns;
 mod cursor;
+mod databases;
 mod ddl;
 mod debug;
 pub use debug::PgDebugger;
@@ -547,6 +548,11 @@ impl Connection for PgConnection {
         admin::maintain(self, schema, table, operation).await
     }
 
+    async fn database_details(&self) -> Result<Vec<platypus_core::DatabaseInfo>> {
+        self.server_admin()?;
+        databases::database_details(self).await
+    }
+
     async fn principals(&self) -> Result<Vec<platypus_core::Principal>> {
         self.server_admin()?;
         security::principals(self).await
@@ -601,6 +607,7 @@ impl Connection for PgConnection {
             bulk_load: !is_cockroach(self),
             server_parameters: self.has_server_admin(),
             server_metrics: self.has_server_admin(),
+            database_admin: self.has_server_admin(),
             debugger: self.has_debugger(),
         }
     }
